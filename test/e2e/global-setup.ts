@@ -41,18 +41,25 @@ async function globalSetup() {
   // duplicate-key errors when tests create rows. Some Neon branch operations
   // or inherited data can leave sequences behind the table max value.
   try {
-    // Import the Neon client dynamically to avoid alias/resolution issues.
-    // Use the DATABASE_URL already loaded into process.env by the dotenv calls above.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL || "");
-    console.log(
-      "🔁 Syncing articles sequence to MAX(id) to avoid PK collisions...",
-    );
-    await sql.query(
-      `SELECT setval(pg_get_serial_sequence('articles','id'), COALESCE((SELECT MAX(id) FROM articles), 1), true);`,
-    );
-    console.log("✅ Sequence sync complete");
+    const databaseUrl = process.env.DATABASE_URL;
+    if (databaseUrl) {
+      // Import the Neon client dynamically to avoid alias/resolution issues.
+      // Use the DATABASE_URL already loaded into process.env by the dotenv calls above.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { neon } = await import("@neondatabase/serverless");
+      const sql = neon(databaseUrl);
+      console.log(
+        "🔁 Syncing articles sequence to MAX(id) to avoid PK collisions...",
+      );
+      await sql.query(
+        `SELECT setval(pg_get_serial_sequence('articles','id'), COALESCE((SELECT MAX(id) FROM articles), 1), true);`,
+      );
+      console.log("✅ Sequence sync complete");
+    } else {
+      console.warn(
+        "⚠️ DATABASE_URL not set; skipping sequence sync in global setup",
+      );
+    }
   } catch (err) {
     console.warn("⚠️ Failed to sync articles sequence:", err);
   }

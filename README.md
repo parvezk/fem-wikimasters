@@ -2,6 +2,21 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+## Database setup (required)
+
+This app expects a Postgres database (Neon/Vercel Postgres/Supabase) and will error if your DB schema hasn’t been migrated yet.
+
+```bash
+# 1) Create a .env with at least DATABASE_URL set
+# 2) Apply Drizzle migrations
+npm run db:migrate
+
+# Optional: seed some sample data
+npm run db:seed
+```
+
+If you ever see an error like `column articles.summary does not exist`, it means your DB schema is behind—run `npm run db:migrate`.
+
 First, run the development server:
 
 ```bash

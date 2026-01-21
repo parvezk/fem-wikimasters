@@ -11,6 +11,15 @@ dotenv.config({ quiet: true, path: path.join(__dirname, ".env.test") });
 // Load .env.test.local if it exists (created by global setup)
 dotenv.config({ quiet: true, path: path.join(__dirname, ".env.test.local") });
 
+const hasStackCreds = Boolean(
+  process.env.NEXT_PUBLIC_STACK_PROJECT_ID &&
+    process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY,
+);
+const hasTestUserCreds = Boolean(
+  process.env.TEST_USER_EMAIL && process.env.TEST_USER_PASSWORD,
+);
+const enableAuthenticatedE2E = hasStackCreds && hasTestUserCreds;
+
 export default defineConfig({
   testDir: "./test/e2e",
   fullyParallel: false,
@@ -26,22 +35,26 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    // Setup project to handle authentication
-    {
-      name: "setup",
-      testMatch: /.*\.setup\.ts/,
-    },
-    // Authenticated tests
-    {
-      name: "chromium-authenticated",
-      use: {
-        ...devices["Desktop Chrome"],
-        // Use saved authentication state
-        storageState: path.join(__dirname, "playwright/.auth/user.json"),
-      },
-      dependencies: ["setup"],
-      testIgnore: /auth\.spec\.ts/, // Auth tests run without authentication
-    },
+    ...(enableAuthenticatedE2E
+      ? [
+          // Setup project to handle authentication
+          {
+            name: "setup",
+            testMatch: /.*\.setup\.ts/,
+          },
+          // Authenticated tests
+          {
+            name: "chromium-authenticated",
+            use: {
+              ...devices["Desktop Chrome"],
+              // Use saved authentication state
+              storageState: path.join(__dirname, "playwright/.auth/user.json"),
+            },
+            dependencies: ["setup"],
+            testIgnore: /auth\.spec\.ts/, // Auth tests run without authentication
+          },
+        ]
+      : []),
     // Unauthenticated tests (for testing auth flows)
     {
       name: "chromium-unauthenticated",
