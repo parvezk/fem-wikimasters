@@ -17,7 +17,7 @@ export default async function NavBar() {
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="font-bold text-xl tracking-tight text-blue-600"
+            className="font-bold text-xl tracking-tight text-red-600"
           >
             Wikimasters
           </Link>
